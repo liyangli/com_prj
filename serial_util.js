@@ -67,47 +67,68 @@ class SerialUtil{
     /**
      * 串口开启动作；
      */
-    start(){
+    start(cb){
         const self = this;
         console.info(this.serialPort);
-        this.serialPort.open((err)=>{
+        try {
+            this.serialPort.open((err)=>{
             
             if(err){
-                console.info(err);
+                cb(false,err,{});
                 return;
             }
             console.info("open success......");
             self._reviceContent();
+            cb(true,"",{});
         });
+        } catch (error) {
+            cb(false,error,{});
+        }
+        
     }
 
 /**
  * 进行发送数据；
  * @param {*} params 
  */
-    send(content){
-        console.info("send content ->"+content);
-        this.serialPort.write(new Buffer(content,'hex'),(err,results)=>{
+    send(content,cb){
+        try {
+            //开始进行事件绑定。如果含有问题进行抛出对应问题；
+
+            
+            this.serialPort.write(new Buffer(content,'hex'),(err,results)=>{
             //需要进行等待接收完毕然后进行返回数据；
             if(err){
                 console.error(err);
+                cb(false,err,{});
                 return;
             }
             
         });
+        } catch (error) {
+            cb(false,error,{});
+        }
+        
     }
 
 /**
  * 关闭对应串口
  */
-    close(){
-        this.serialPort.close((err)=>{
+    close(cb){
+        try {
+            this.serialPort.close((err)=>{
             if(err){
                 console.error("关闭时出现错误，错误信息为->"+err);
+                cb(false,err,{});
             }else{
                 console.info("已经正常关闭；");
+                cb(true,"",{});
             }
         });
+        } catch (error) {
+             cb(false,error,{});
+        }
+        
     }
 }
 

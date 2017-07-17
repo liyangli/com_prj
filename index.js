@@ -18,34 +18,47 @@ const serialUtil = new SerialUtil(ev);
 
 let app = express();
 
+class RespBean {
+    constructor(flag,msg,data){
+    this.flag= flag;
+    this.msg = msg;
+    this.data = data;
+    }
+}
+
+const cb = function(req,res){
+    let callback = req.param("callback");
+    let returnMsg = "";
+    if(callback){
+        returnMsg = "/**/ typeof "+callback+" === 'function' && "+callback+"(";
+    }
+    return function(flag,msg,data){
+        const respBean = new RespBean(flag,msg,data);
+        returnMsg += JSON.stringify(respBean);
+        if(callback){
+            returnMsg += ")";
+        }
+        res.send(returnMsg);
+    }; 
+}
+
 app.get("/start",function(req,res){
-    console.info("i am in start");
-   serialUtil.start(); 
-   res.send({
-       flag: true,
-       msg: ''
-   })
+   serialUtil.start(cb(req,res)); 
+
+   
 })
 app.get("/close",(req,res)=>{
-   serialUtil.close(); 
-   res.send({
-       flag: true,
-       msg: ''
-   })
+   serialUtil.close(cb(req,res));
 })
 app.get("/send",(req,res)=>{
     let content = req.param('content');
-
+    let callback = cb(req,res);
     ev.on('comData',(result)=>{
         ev.removeAllListeners('comData');
         console.info("接受数据为->"+result);
-        res.send({
-            flag: true,
-            msg: '',
-            data: result
-        })
+        res.send(callback(true,"",result));
     });
-   serialUtil.send(content); 
+   serialUtil.send(content,callback); 
    
 })
 app.get("/",(req,res)=>{
